@@ -1,8 +1,9 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt5.QtGui import QPainter, QColor, QPixmap
-from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice, QLineSeries
-from PyQt5.QtCore import Qt, QTimer, QThread
+from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice, QLineSeries, QValueAxis
+from PyQt5.QtCore import Qt, QIODevice, QTimer, QThread
+from PyQt5.QtBluetooth import QBluetoothDeviceDiscoveryAgent, QBluetoothUuid, QBluetoothSocket, QBluetoothAddress, QBluetoothServiceInfo
 import numpy as np
 import torch
 import model
@@ -11,10 +12,24 @@ import model
 names = ['Non-ecotopic beats', 'Supraventricular ectopic beats', 'Ventricular ectopic beats', 'Fusion Beats', 'Unknown Beats']
 chances = [50, 20, 15, 10, 5]
 colors = [QColor(100, 255, 100), QColor(255, 255, 200), QColor(255, 200, 150), QColor(255, 130, 130), QColor(200, 80, 255)]
-ecg_data = np.array([1.,0.75826448,0.11157025,0.,0.08057851,0.0785124,0.0661157,0.04958678,0.04752066,0.03512397,0.03099173,0.02892562,0.03512397,0.0268595,0.0392562,0.03512397,0.04338843,0.04752066,0.05371901,0.05371901,0.07024793,0.07231405,0.08471075,0.09710744,0.12190083,0.1322314,0.16942149,0.19628099,0.21487603,0.23553719,0.25413224,0.2644628,0.28512397,0.27272728,0.26652893,0.23966943,0.21487603,0.17355372,0.1570248,0.12396694,0.12190083,0.10743801,0.1053719,0.09710744,0.1053719,0.09917355,0.1053719,0.09917355,0.10743801,0.10743801,0.11570248,0.11157025,0.12190083,0.11157025,0.11983471,0.11157025,0.11363637,0.11157025,0.12190083,0.1053719,0.10743801,0.10123967,0.10123967,0.08677686,0.09297521,0.08471075,0.08264463,0.0785124,0.0785124,0.07024793,0.07644628,0.06818182,0.0785124,0.07024793,0.06818182,0.06818182,0.07438017,0.07231405,0.09090909,0.10123967,0.10743801,0.1053719,0.12190083,0.11570248,0.10950413,0.09710744,0.10330579,0.09710744,0.08677686,0.07231405,0.07024793,0.05371901,0.05785124,0.04958678,0.05785124,0.05165289,0.05578512,0.05371901,0.05371901,0.,0.01239669,0.18801653,0.68181819,0.97520661,0.61570245,0.04132231,0.01239669,0.08677686,0.0661157,0.0661157,0.05165289,0.0392562,0.04338843,0.03305785,0.04132231,0.03512397,0.04545455,0.04132231,0.04545455,0.04338843,0.04958678,0.04752066,0.06404959,0.06818182,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.])
+#ecg_data = np.array([0.15765766,0.14564565,0.16516517,0.04804805,0.16816817,0.14564565,0.17417417,0.17117117,0.15765766,0.14864865,0.16066066,0.04804805,0.17417417,0.14564565,0.16516517,1.,0.75826448,0.11157025,0.,0.08057851,0.0785124,0.0661157,0.04958678,0.04752066,0.03512397,0.03099173,0.02892562,0.03512397,0.0268595,0.0392562,0.03512397,0.04338843,0.04752066,0.05371901,0.05371901,0.07024793,0.07231405,0.08471075,0.09710744,0.12190083,0.1322314,0.16942149,0.19628099,0.21487603,0.23553719,0.25413224,0.2644628,0.28512397,0.27272728,0.26652893,0.23966943,0.21487603,0.17355372,0.1570248,0.12396694,0.12190083,0.10743801,0.1053719,0.09710744,0.1053719,0.09917355,0.1053719,0.09917355,0.10743801,0.10743801,0.11570248,0.11157025,0.12190083,0.11157025,0.11983471,0.11157025,0.11363637,0.11157025,0.12190083,0.1053719,0.10743801,0.10123967,0.10123967,0.08677686,0.09297521,0.08471075,0.08264463,0.0785124,0.0785124,0.07024793,0.07644628,0.06818182,0.0785124,0.07024793,0.06818182,0.06818182,0.07438017,0.07231405,0.09090909,0.10123967,0.10743801,0.1053719,0.12190083,0.11570248,0.10950413,0.09710744,0.10330579,0.09710744,0.08677686,0.07231405,0.07024793,0.05371901,0.05785124,0.04958678,0.05785124,0.05165289,0.05578512,0.05371901,0.05371901,0.,0.01239669,0.18801653,0.68181819,0.97520661,0.61570245,0.04132231,0.01239669,0.08677686,0.0661157,0.0661157,0.05165289,0.0392562,0.04338843,0.03305785,0.04132231,0.03512397,0.04545455,0.04132231,0.04545455,0.04338843,0.04958678,0.04752066,0.06404959,0.06818182,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.])
+ecg_data = np.zeros(300)
 
 
-graph_updelay = 10
+graph_updelay = 80
+mac_address = "B8:D6:1A:6B:32:7A"
+service_uuid = QBluetoothUuid(QBluetoothUuid.SerialPort)
+socket = QBluetoothSocket(QBluetoothServiceInfo.RfcommProtocol)
+def socket_state_changed(state):
+    if state == QBluetoothSocket.UnconnectedState:
+        print("Socket unconnected")
+    elif state == QBluetoothSocket.ConnectingState:
+        print("Socket connecting")
+    elif state == QBluetoothSocket.ConnectedState:
+        print("Socket connected")
+socket.stateChanged.connect(socket_state_changed)
+
+socket.connectToService(QBluetoothAddress(mac_address), service_uuid)
 
 
 app = QApplication(sys.argv)
@@ -76,6 +91,9 @@ chart = QChart()
 chart.legend().hide()
 chart.addSeries(ecg_series)
 chart.createDefaultAxes()
+y_axis = QValueAxis()
+y_axis.setRange(0, 100)
+chart.setAxisY(y_axis, ecg_series)
 chart.setTitle("LIVE ECG")
 chart_view = QChartView(chart)
 chart_view.setRenderHint(QPainter.Antialiasing)
@@ -103,7 +121,18 @@ pie_timer = QTimer()
 pie_timer.timeout.connect(lambda: update_pie())
 pie_timer.start(graph_updelay)
 
+def read():
+  try:
+    num = eval(str(socket.readLine(), "utf-8"))
+    ecg_data[:-1] = ecg_data[1:]
+    ecg_data[-1] = num
+  except:
+    pass
 
+read_timer = QTimer()
+read_timer.timeout.connect(lambda: read())
+read_timer.start(1)
+'''
 class Receiver(QThread):
 
   def __init__(self):
@@ -112,10 +141,19 @@ class Receiver(QThread):
   def run(self):
     global ecg_data
     while 1:
-      ecg_data = np.roll(ecg_data, -1)
+      try:
+        num = eval(str(socket.readLine(), "utf-8"))
+        ecg_data[:-1] = ecg_data[1:]
+        ecg_data[-1] = num
+        print(num)
+      except:
+        print('failed')
+        pass
 
 blue_thread = Receiver()
 blue_thread.start()
+'''
+
 
 def plot_sect(res, vals, max_val=1):
   max_x, max_y = res
