@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt5.QtGui import QPainter, QColor, QPixmap
+from PyQt5.QtGui import QPainter, QColor, QPixmap, QPen
 from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice, QLineSeries, QValueAxis
 from PyQt5.QtCore import Qt, QIODevice, QTimer, QThread
 from PyQt5.QtBluetooth import QBluetoothDeviceDiscoveryAgent, QBluetoothUuid, QBluetoothSocket, QBluetoothAddress, QBluetoothServiceInfo
@@ -9,11 +9,12 @@ import torch
 import model
 
 
-names = ['Non-ecotopic beats', 'Supraventricular ectopic beats', 'Ventricular ectopic beats', 'Fusion Beats', 'Unknown Beats']
+names = ['Non-ecotopic', 'Supraventricular', 'Ventricular', 'Fusion', 'Unknown']
 chances = [50, 20, 15, 10, 5]
 colors = [QColor(100, 255, 100), QColor(255, 255, 200), QColor(255, 200, 150), QColor(255, 130, 130), QColor(200, 80, 255)]
 ecg_data = np.zeros(300)
 ecg_data = np.array([0.15765766,0.14564565,0.16516517,0.04804805,0.16816817,0.14564565,0.17417417,0.17117117,0.15765766,0.14864865,0.16066066,0.04804805,0.17417417,0.14564565,0.16516517,1.,0.75826448,0.11157025,0.,0.08057851,0.0785124,0.0661157,0.04958678,0.04752066,0.03512397,0.03099173,0.02892562,0.03512397,0.0268595,0.0392562,0.03512397,0.04338843,0.04752066,0.05371901,0.05371901,0.07024793,0.07231405,0.08471075,0.09710744,0.12190083,0.1322314,0.16942149,0.19628099,0.21487603,0.23553719,0.25413224,0.2644628,0.28512397,0.27272728,0.26652893,0.23966943,0.21487603,0.17355372,0.1570248,0.12396694,0.12190083,0.10743801,0.1053719,0.09710744,0.1053719,0.09917355,0.1053719,0.09917355,0.10743801,0.10743801,0.11570248,0.11157025,0.12190083,0.11157025,0.11983471,0.11157025,0.11363637,0.11157025,0.12190083,0.1053719,0.10743801,0.10123967,0.10123967,0.08677686,0.09297521,0.08471075,0.08264463,0.0785124,0.0785124,0.07024793,0.07644628,0.06818182,0.0785124,0.07024793,0.06818182,0.06818182,0.07438017,0.07231405,0.09090909,0.10123967,0.10743801,0.1053719,0.12190083,0.11570248,0.10950413,0.09710744,0.10330579,0.09710744,0.08677686,0.07231405,0.07024793,0.05371901,0.05785124,0.04958678,0.05785124,0.05165289,0.05578512,0.05371901,0.05371901,0.,0.01239669,0.18801653,0.68181819,0.97520661,0.61570245,0.04132231,0.01239669,0.08677686,0.0661157,0.0661157,0.05165289,0.0392562,0.04338843,0.03305785,0.04132231,0.03512397,0.04545455,0.04132231,0.04545455,0.04338843,0.04958678,0.04752066,0.06404959,0.06818182]) * 100
+bpm = 85
 
 
 '''
@@ -42,13 +43,13 @@ win.setStyleSheet("background-color: rgb(255, 255, 255);")
 layout = QVBoxLayout()
 win.setLayout(layout)
 
-title = QLabel('AI Prediction of Heart Status')
+title = QLabel('John Doe')
 font = title.font()
-font.setPointSize(16)
+font.setPointSize(50)
 title.setFont(font)
 title.setAlignment(Qt.AlignCenter)
 layout.addWidget(title, 1)
-infer_graph = QVBoxLayout()
+infer_graph = QHBoxLayout()
 pie_series = QPieSeries()
 pie_series.setHoleSize(0.5)
 for name, chance, color in zip(names, chances, colors):
@@ -78,15 +79,13 @@ for slice in pie_series.slices():
   legend_layout.addLayout(item_layout)
 legend_layout.addStretch(1)
 
-center_legend = QHBoxLayout()
-center_legend.addStretch(1)
-center_legend.addLayout(legend_layout)
-center_legend.addStretch(1)
-
-infer_graph.addLayout(center_legend, 1)
+infer_graph.addLayout(legend_layout, 1)
 layout.addLayout(infer_graph, 6)
 
 ecg_series = QLineSeries()
+pen = QPen(QColor(110, 100, 100))
+pen.setWidth(2)
+ecg_series.setPen(pen)
 for x, y in enumerate(ecg_data):
   ecg_series.append(x, y)
 chart = QChart()
@@ -102,7 +101,7 @@ chart.setAxisY(y_axis, ecg_series)
 x_axis = QValueAxis()
 x_axis.setLabelsVisible(False)
 x_axis.setGridLineVisible(False)
-x_axis.setTickCount(1)
+x_axis.setLineVisible(False)
 chart.setAxisX(x_axis, ecg_series)
 chart.setTitle("LIVE ECG")
 chart_view = QChartView(chart)
