@@ -17,7 +17,6 @@ ecg_data = np.array([0.15765766,0.14564565,0.16516517,0.04804805,0.16816817,0.14
 bpm = 85
 
 
-'''
 graph_updelay = 80
 mac_address = "B8:D6:1A:6B:32:7A"
 service_uuid = QBluetoothUuid(QBluetoothUuid.SerialPort)
@@ -32,7 +31,6 @@ def socket_state_changed(state):
 socket.stateChanged.connect(socket_state_changed)
 
 socket.connectToService(QBluetoothAddress(mac_address), service_uuid)
-'''
 
 
 app = QApplication(sys.argv)
@@ -147,7 +145,6 @@ def get_bpm(ecg_data, thresh=1000):
   else:
     return None
 
-'''
 def update_ecg():
   global ecg_series, ecg_data, heart_rate
   bpm = get_bpm(ecg_data)
@@ -162,7 +159,7 @@ ecg_timer.start(graph_updelay)
 
 def update_infer():
   global pie_series, chances, legend_layout, normality
-  normality.setText(f{chance[0]}%')
+  normality.setText(f'{chance[0]}%')
   for slice, chance in zip(pie_series.slices(), chances):
     slice.setValue(chance)
   for i, item_layout in enumerate(legend_layout.itemAt(i).layout() for i in range(1, 6)):
@@ -184,9 +181,7 @@ def read():
 read_timer = QTimer()
 read_timer.timeout.connect(lambda: read())
 read_timer.start(1)
-'''
 
-'''
 class Receiver(QThread):
 
   def __init__(self):
@@ -206,7 +201,6 @@ class Receiver(QThread):
 
 blue_thread = Receiver()
 blue_thread.start()
-'''
 
 
 def plot_sect(res, vals, max_val=1):
@@ -269,10 +263,8 @@ class Predictor(QThread):
       for i, probability in enumerate(probabilities):
         chances[i] = int(probability * 10000)/100
 
-'''
 ai_thread = Predictor()
 ai_thread.start()
-'''
 
 
 
