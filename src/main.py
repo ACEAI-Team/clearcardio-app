@@ -133,10 +133,26 @@ extra_info_layout.addWidget(extra_info, 1)
 extra_info_layout.setContentsMargins(70, 00, 00, 00)
 layout.addLayout(extra_info_layout, 3)
 
+def get_bpm(ecg_data, thresh=1000):
+  ecg_data_diff = np.diff(ecg_data)
+  beat_wave = ecg_data_diff * ecg_data[1:]
+  masked_beat_wave = beat_wave * (beat_wave > thresh)
+  masked_beat_wave_diff = np.diff(masked_beat_wave)
+  beats = masked_beat_wave_diff[:-1] * masked_beat_wave_diff[1:] < 0
+  beat_times = np.where(beats == 1)[0]
+  if len(beat_times) > 1:
+    first, last = beat_times[-2:]
+    gap = (last - first) / 360
+    return 60 / gap
+  else:
+    return None
 
 '''
 def update_ecg():
-  global ecg_series
+  global ecg_series, ecg_data, heart_rate
+  bpm = get_bpm(ecg_data)
+  if bpm:
+    heart_rate.setText(f'{int(bpm)} BPM')
   for x, y in enumerate(ecg_data):
     ecg_series.replace(x, x, y)
 
@@ -146,7 +162,7 @@ ecg_timer.start(graph_updelay)
 
 def update_infer():
   global pie_series, chances, legend_layout, normality
-  normality = chance[0]
+  normality.setText(f{chance[0]}%')
   for slice, chance in zip(pie_series.slices(), chances):
     slice.setValue(chance)
   for i, item_layout in enumerate(legend_layout.itemAt(i).layout() for i in range(1, 6)):
