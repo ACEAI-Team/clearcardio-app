@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsView, QGraphicsScene, QGraphicsTextItem, QGraphicsProxyWidget, QSizePolicy
 from PyQt5.QtGui import QPainter, QColor, QPixmap, QPen
 from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice, QLineSeries, QValueAxis
 from PyQt5.QtCore import Qt, QIODevice, QTimer, QThread
@@ -38,7 +38,7 @@ socket.connectToService(QBluetoothAddress(mac_address), service_uuid)
 app = QApplication(sys.argv)
 win = QWidget()
 win.setWindowTitle('ClearCardio')
-win.resize(500, 800) 
+win.resize(650, 900) 
 win.setStyleSheet("background-color: rgb(255, 255, 255);")
 layout = QVBoxLayout()
 win.setLayout(layout)
@@ -51,7 +51,7 @@ title.setAlignment(Qt.AlignCenter)
 layout.addWidget(title, 1)
 infer_graph = QHBoxLayout()
 pie_series = QPieSeries()
-pie_series.setHoleSize(0.5)
+pie_series.setHoleSize(0.6)
 for name, chance, color in zip(names, chances, colors):
   slice = pie_series.append(name, chance)
   slice.setColor(color)
@@ -61,6 +61,7 @@ chart.setAnimationOptions(QChart.SeriesAnimations)
 chart.legend().setVisible(False)
 chart_view = QChartView(chart)
 chart_view.setRenderHint(QPainter.Antialiasing)
+chart_view.setFixedSize(400, 400)
 infer_graph.addWidget(chart_view, 9)
 
 legend_layout = QVBoxLayout()
@@ -79,7 +80,16 @@ for slice in pie_series.slices():
   legend_layout.addLayout(item_layout)
 legend_layout.addStretch(1)
 
-infer_graph.addLayout(legend_layout, 1)
+image_label = QLabel()
+image = QPixmap("img.png")
+image_label.setPixmap(image)
+
+side_layout = QVBoxLayout()
+side_layout.addWidget(image_label, alignment=Qt.AlignTop)
+side_layout.addStretch(1)
+side_layout.addLayout(legend_layout)
+
+infer_graph.addLayout(side_layout, 1)
 layout.addLayout(infer_graph, 6)
 
 ecg_series = QLineSeries()
@@ -108,6 +118,21 @@ chart_view = QChartView(chart)
 chart_view.setRenderHint(QPainter.Antialiasing)
 layout.addWidget(chart_view, 3)
 
+extra_info = QLabel('''
+Device Name: ACE-DA02
+UUID: U38D-29G3-2935-2351
+Manufactured: 2023/08/20
+Paired: 2023/09/05
+Registered Owner: John Doe
+''')
+font = extra_info.font()
+font.setPointSize(16)
+extra_info.setFont(font)
+extra_info_layout = QHBoxLayout()
+extra_info_layout.addWidget(extra_info, 1)
+extra_info_layout.setContentsMargins(70, 00, 00, 00)
+layout.addLayout(extra_info_layout, 3)
+
 
 '''
 def update_ecg():
@@ -119,8 +144,9 @@ ecg_timer = QTimer()
 ecg_timer.timeout.connect(lambda: update_ecg())
 ecg_timer.start(graph_updelay)
 
-def update_pie():
-  global pie_series, chances, legend_layout
+def update_infer():
+  global pie_series, chances, legend_layout, normality
+  normality = chance[0]
   for slice, chance in zip(pie_series.slices(), chances):
     slice.setValue(chance)
   for i, item_layout in enumerate(legend_layout.itemAt(i).layout() for i in range(1, 6)):
@@ -128,7 +154,7 @@ def update_pie():
     label.setText(f'{names[i]} {chances[i]}%')
 
 pie_timer = QTimer()
-pie_timer.timeout.connect(lambda: update_pie())
+pie_timer.timeout.connect(lambda: update_infer())
 pie_timer.start(graph_updelay)
 
 def read():
@@ -227,9 +253,27 @@ class Predictor(QThread):
       for i, probability in enumerate(probabilities):
         chances[i] = int(probability * 10000)/100
 
+'''
 ai_thread = Predictor()
 ai_thread.start()
+'''
 
 
+
+center = QWidget()
+center.setStyleSheet("background-color: transparent; color: black;")
+text_layout = QVBoxLayout()
+center.setLayout(text_layout)
+normality = QLabel("91%")
+font = normality.font()
+font.setPointSize(40)
+normality.setFont(font)
+heart_rate = QLabel("85 BPM")
+text_layout.addStretch(1)
+text_layout.addWidget(normality, alignment=Qt.AlignCenter)
+text_layout.addWidget(heart_rate, alignment=Qt.AlignCenter)
+text_layout.addStretch(1)
+center.setParent(win)
 win.show()
+center.setGeometry(chart_view.x(), chart_view.y() - 400, 400, 400)
 app.exec_()
