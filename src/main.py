@@ -11,7 +11,8 @@ import model
 
 names = ['Non-ecotopic', 'Supraventricular', 'Ventricular', 'Fusion', 'Unknown']
 chances = [50, 20, 15, 10, 5]
-colors = [QColor(100, 255, 100), QColor(255, 255, 200), QColor(255, 200, 150), QColor(255, 130, 130), QColor(200, 80, 255)]
+#colors = [QColor(100, 255, 100), QColor(255, 255, 200), QColor(255, 200, 150), QColor(255, 130, 130), QColor(200, 80, 255)]
+colors = [QColor(243, 156, 107), QColor(117, 158, 184), QColor(198, 202, 83), QColor(170, 68, 101), QColor(247, 177, 171)]
 ecg_data = np.zeros(300)
 #ecg_data = np.array([0.15765766,0.14564565,0.16516517,0.04804805,0.16816817,0.14564565,0.17417417,0.17117117,0.15765766,0.14864865,0.16066066,0.04804805,0.17417417,0.14564565,0.16516517,1.,0.75826448,0.11157025,0.,0.08057851,0.0785124,0.0661157,0.04958678,0.04752066,0.03512397,0.03099173,0.02892562,0.03512397,0.0268595,0.0392562,0.03512397,0.04338843,0.04752066,0.05371901,0.05371901,0.07024793,0.07231405,0.08471075,0.09710744,0.12190083,0.1322314,0.16942149,0.19628099,0.21487603,0.23553719,0.25413224,0.2644628,0.28512397,0.27272728,0.26652893,0.23966943,0.21487603,0.17355372,0.1570248,0.12396694,0.12190083,0.10743801,0.1053719,0.09710744,0.1053719,0.09917355,0.1053719,0.09917355,0.10743801,0.10743801,0.11570248,0.11157025,0.12190083,0.11157025,0.11983471,0.11157025,0.11363637,0.11157025,0.12190083,0.1053719,0.10743801,0.10123967,0.10123967,0.08677686,0.09297521,0.08471075,0.08264463,0.0785124,0.0785124,0.07024793,0.07644628,0.06818182,0.0785124,0.07024793,0.06818182,0.06818182,0.07438017,0.07231405,0.09090909,0.10123967,0.10743801,0.1053719,0.12190083,0.11570248,0.10950413,0.09710744,0.10330579,0.09710744,0.08677686,0.07231405,0.07024793,0.05371901,0.05785124,0.04958678,0.05785124,0.05165289,0.05578512,0.05371901,0.05371901,0.,0.01239669,0.18801653,0.68181819,0.97520661,0.61570245,0.04132231,0.01239669,0.08677686,0.0661157,0.0661157,0.05165289,0.0392562,0.04338843,0.03305785,0.04132231,0.03512397,0.04545455,0.04132231,0.04545455,0.04338843,0.04958678,0.04752066,0.06404959,0.06818182]) * 100
 
@@ -35,12 +36,12 @@ socket.connectToService(QBluetoothAddress(mac_address), service_uuid)
 app = QApplication(sys.argv)
 win = QWidget()
 win.setWindowTitle('ClearCardio')
-win.resize(650, 900) 
+win.resize(975, 1500) 
 win.setStyleSheet("background-color: rgb(255, 255, 255);")
 layout = QVBoxLayout()
 win.setLayout(layout)
 
-title = QLabel('John Doe')
+title = QLabel('ClearCardio')
 font = title.font()
 font.setPointSize(50)
 title.setFont(font)
@@ -48,7 +49,7 @@ title.setAlignment(Qt.AlignCenter)
 layout.addWidget(title, 1)
 infer_graph = QHBoxLayout()
 pie_series = QPieSeries()
-pie_series.setHoleSize(0.6)
+pie_series.setHoleSize(0.5)
 for name, chance, color in zip(names, chances, colors):
   slice = pie_series.append(name, chance)
   slice.setColor(color)
@@ -58,7 +59,7 @@ chart.setAnimationOptions(QChart.SeriesAnimations)
 chart.legend().setVisible(False)
 chart_view = QChartView(chart)
 chart_view.setRenderHint(QPainter.Antialiasing)
-chart_view.setFixedSize(400, 400)
+chart_view.setFixedSize(600, 600)
 infer_graph.addWidget(chart_view, 9)
 
 legend_layout = QVBoxLayout()
@@ -85,6 +86,7 @@ side_layout = QVBoxLayout()
 side_layout.addWidget(image_label, alignment=Qt.AlignTop)
 side_layout.addStretch(1)
 side_layout.addLayout(legend_layout)
+side_layout.addStretch(1)
 
 infer_graph.addLayout(side_layout, 1)
 layout.addLayout(infer_graph, 6)
@@ -158,7 +160,7 @@ ecg_timer.start(graph_updelay)
 
 def update_infer():
   global pie_series, chances, legend_layout, normality
-  normality.setText(f'{chance[0]}%')
+  normality.setText(f'{chances[0]}%')
   for slice, chance in zip(pie_series.slices(), chances):
     slice.setValue(chance)
   for i, item_layout in enumerate(legend_layout.itemAt(i).layout() for i in range(1, 6)):
@@ -190,10 +192,12 @@ class Receiver(QThread):
     global ecg_data
     while 1:
       try:
-        num = eval(str(socket.readLine(), "utf-8"))
+        data = str(socket.readLine(), "utf-8")
+        print(data)
+        num = eval(data)
         ecg_data[:-1] = ecg_data[1:]
         ecg_data[-1] = num
-        print(num)
+        #print(num)
       except:
         print('failed')
         pass
@@ -273,7 +277,7 @@ text_layout = QVBoxLayout()
 center.setLayout(text_layout)
 normality = QLabel("91%")
 font = normality.font()
-font.setPointSize(40)
+font.setPointSize(36)
 normality.setFont(font)
 heart_rate = QLabel("85 BPM")
 text_layout.addStretch(1)
@@ -282,5 +286,5 @@ text_layout.addWidget(heart_rate, alignment=Qt.AlignCenter)
 text_layout.addStretch(1)
 center.setParent(win)
 win.show()
-center.setGeometry(chart_view.x(), chart_view.y() - 400, 400, 400)
+center.setGeometry(chart_view.x(), chart_view.y() - 600, 600, 600)
 app.exec_()
